@@ -6,13 +6,14 @@ CPPFLAGS = -Wall -Werror -std=c++0x I
 OBJ = main.o functions.o
 OUTPUT = main.o
 ODIR = ./bin
+PROJ_DIR = $(HOME)/home/aetas/gitrepos/project_7/project7
 
-vpath = %.h ./include
-vpath = %.cpp ./src
+vpath = %.h  $(PROJ_DIR)/include
+vpath = %.cpp $(PROJ_DIR)/src
 
 JSON_C_DIR=/usr
-CPPFLAGS += -I$(JSON_C_DIR)/include/json-c
-LDFLAGS+= -L$(JSON_C_DIR)/lib -ljson-c
+CPPFLAGS += -I/home/aetas/gitrepos/project_7/project7/lib64/libjson-c
+LDFLAGS+= -L/home/aetas/gitrepos/project_7/project7/lib64 -llibjson-c
 
 program: $(OBJ)
 	$(CC) $(CPPFLAGS) $(OBJ) -o $(ODIR)/$(OUTPUT) $(LDFLAGS)
