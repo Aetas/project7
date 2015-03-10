@@ -17,7 +17,7 @@ LDFLAGS+= -L$(JSON_C_DIR)/lib -ljson-c
 program: $(OBJ)
 	$(CC) $(CPPFLAGS) $(OBJ) -o $(ODIR)/$(OUTPUT) $(LDFLAGS)
 
-main.o : ./src/Assignment6.cpp ./include/MovieTree.h
+main.o : ./src/Assignment7.cpp ./include/MovieTree.h
 	$(CC) $(CPPFLAGS) -c $(LDFLAGS)
 
 functions.o : ./src/MovieTree.cpp ./include/MovieTree.h
@@ -28,7 +28,7 @@ clean :
 	rm program $(OBJ)
 
 # Creates a log to keep track of things changed
-log : Assignment6.cpp $(OBJ)
+log : Assignment7.cpp $(OBJ)
 	lpt -p $?
 	touch log
 
