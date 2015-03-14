@@ -1,0 +1,17 @@
+Still needs a RB delete (i actually added a transplant function, not a delete as the commit states).
+Still needs rb-delete-rebalance
+mayhaps a join function?
+
+JSON logging still needed on all new functions.
+Fix seg fault in recursive search function when searching for a non-existant movie.
+
+Change the menu in main() to reflect new options unique to RB-trees.
+
+Go over given code and check if any of it is relevant to me.
+
+Write a function to send back the height of the longest path it can find.
+
+Change out_file to be taken as an argument.
+
+(add personal flair ro work in my file structure? Probably after cog is happy.)
+^included in this is error control with no input of invalid inputs.
