@@ -342,15 +342,13 @@ void MovieTree::deleteFixup(MovieNode*)
 //lets the delete() magic happen
 void MovieTree::transplant(MovieNode* u, MovieNode* v)	//swaps u with v
 {
-	if (u->parent == nullptr)	//if u was root, make v new root
+	if (u->parent == nil)	//if u was root, make v new root
 		root = v;
 	else if (u == u->parent->left)	//if u is smaller than it's parent
 		u->parent->left = v;		//set v to the left child of parent of u. Swap them at left, really
 	else
 		u->parent->right = v;		//otherwise swap them at right
-
-	if (v != nullptr)				//reassign parents to double link
-		v->parent = u->parent;
+	v->parent = u->parent;
 }
 
 //maddening delete function
