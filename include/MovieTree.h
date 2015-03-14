@@ -2,7 +2,7 @@
 #define MOVIETREE_H
 
 #include<string>
-#include<json-c/json.h>
+#include<json/json.h>
 
 struct MovieNode
 {
@@ -18,6 +18,7 @@ struct MovieNode
     std::string title;
     int year;
     int quantity;
+    bool isRed;
 };
 
 
@@ -49,10 +50,13 @@ public:
 private:
 
 	int operations;
-	MovieNode *root;
+	MovieNode* root;
+	MovieNode* nil;
 	json_object* Assignment6Output;
 
 	int nodeCount();
+	int countLongestPath();
+
 
 	void inorder_walk(MovieNode*);			//internal reccursive call
 	MovieNode* search(MovieNode*, std::string&);//recursive, and sub-tree version of search
@@ -60,7 +64,11 @@ private:
 	MovieNode* maximum(MovieNode*);			//find max of specified sub-node
 	MovieNode* successor(MovieNode*);		//next incriment
 	MovieNode* predecessor(MovieNode*);		//next smaller
+	void rightRotate(MovieNode*);
+	void leftRotate(MovieNode*);
 	void transplant(MovieNode*, MovieNode*);//switches dangling trees on a parent
+	void addFixup(MovieNode*);
+	void deleteFixup(MovieNode*);
 	void delete_node(MovieNode*);			//removes a node
 	void delete_tree(MovieNode*);			//delete whole tree. Not purely in ~MovieTree() because it was easier to debugg.
 

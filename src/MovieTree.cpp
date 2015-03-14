@@ -1,6 +1,6 @@
 #include<iostream>
 #include<string>
-#include<json-c/json.h>
+#include<json/json.h>
 #include "MovieTree.h"
 
 //******************
@@ -196,49 +196,108 @@ MovieNode* MovieTree::predecessor(MovieNode* n)
 }
 
 //global insert from root
-void MovieTree::insert(MovieNode* new_node)
+void MovieTree::insert(MovieNode* newNode)
 {
-	MovieNode* n = root;	//start at root
-	MovieNode* trail = nullptr;
-	while (n != nullptr)	//if the tree is not empty, find the new node's sub tree
+	MovieNode* y = nil;
+	MovieNode* x = root;
+	while (x != nil)
 	{
-		trail = n;			//trailing pointer
-		if (new_node->title.compare(n->title) < 0)
-			n = n->left;	//if the new key is smaller, go left
-		else
-			n = n->right;	//else go right
+	    y = x;
+	    if(newNode->title.compare(x->title) < 0)
+            x = x->left;
+        else
+            x = x->right;
 	}
-	new_node->parent = trail;
-	if (trail == nullptr)	//tree was not made, new node is root
-		root = new_node;
-	else if (new_node->title.compare(trail->title) < 0)
-		trail->left = new_node;		//if smaller than parent, make left child
-	else
-		trail->right = new_node;	//if larger, makde right child
+    newNode->parent = y;
+	if (y == nil)
+        root = newNode;
+    else if (newNode->title.compare(y->title) < 0)
+        y->left = newNode;
+    else
+        y->right = newNode;
+    newNode->left = nil;
+    newNode->right = nil;
+    newNode->isRed = TRUE;
+
+    addFixup(newNode);
 }
 
 //insert that starts in a specified sub tree. Same as above. Used pretty much only for delete and transplant f()'s
-void MovieTree::insert(MovieNode* start, MovieNode* new_node)
+void MovieTree::insert(MovieNode* start, MovieNode* newNode)
 {
-	MovieNode* n = start;
-	MovieNode* trail = nullptr;
-	while (n != nullptr)	//if the tree is not empty, find the new node's sub tree
+	MovieNode* y = nil;
+	MovieNode* x = start;
+	while (x != nil)
 	{
-		trail = n;			//trailing pointer
-		if (new_node->title.compare(n->title) < 0)
-			n = n->left;	//if the new key is smaller, go left
-		else
-			n = n->right;
+	    y = x;
+	    if(newNode->title.compare(x->title) < 0)
+            x = x->left;
+        else
+            x = x->right;
 	}
-	new_node->parent = trail;
-	if (trail == nullptr)
-		root = new_node;
-	else if (new_node->title.compare(trail->title) < 0)
-		trail->left = new_node;
-	else
-		trail->right = new_node;
+    newNode->parent = y;
+	if (y == nil)
+        root = newNode;
+    else if (newNode->title.compare(y->title) < 0)
+        y->left = newNode;
+    else
+        y->right = newNode;
+    newNode->left = nil;
+    newNode->right = nil;
+    newNode->isRed = TRUE;
+
+    addFixup(newNode);
 }
 
+//right rotation
+void MovieTree::rightRotate(MovieNode* x)
+{
+    MovieNode* y = x->left;
+    x->left = y->right;
+    if (y->right != nil)
+        y->right->parent = x;
+    y->parent = x->parent;
+    if (x->parent == nil)
+        root = y;
+    else if (x == x->parent->right)
+        x->parent->right = y;
+    else
+        x->parent->left = y;
+    y->right = x;
+    x->parent = y;
+
+}
+
+//left rotation
+void MovieTree::leftRotate(MovieNode* x)
+{
+    MovieNode* y = x->right;
+    x->right = y->left;
+    if (y->left != nil)
+        y->left->parent = x;
+    y->parent = x->parent;
+    if (x->parent == nil)
+        root = y;
+    else if (x == x->parent->left)
+        x->parent->left = y;
+    else
+        x->parent->right = y;
+    y->left = x;
+    x->parent = y;
+
+}
+
+void MovieTree::addFixup(MovieNode*)
+{
+
+
+}
+
+
+void MovieTree::deleteFixup(MovieNode*)
+{
+
+}
 //lets the delete() magic happen
 void MovieTree::transplant(MovieNode* u, MovieNode* v)	//swaps u with v
 {
