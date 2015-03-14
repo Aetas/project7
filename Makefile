@@ -11,9 +11,9 @@ PROJ_DIR = $(HOME)/home/aetas/gitrepos/project_7/project7
 vpath = %.h  $(PROJ_DIR)/include
 vpath = %.cpp $(PROJ_DIR)/src
 
-JSON_C_DIR=/usr
-CPPFLAGS += -I/home/aetas/gitrepos/project_7/project7/lib64/libjson-c
-LDFLAGS+= -L/home/aetas/gitrepos/project_7/project7/lib64 -llibjson-c
+JSON_C_DIR=/usr/lib64
+CPPFLAGS += -I$(JSON_C_DIR)/include/json-c
+LDFLAGS+= -L$(JSON_C_DIR)/lib -ljson-c
 
 program: $(OBJ)
 	$(CC) $(CPPFLAGS) $(OBJ) -o $(ODIR)/$(OUTPUT) $(LDFLAGS)

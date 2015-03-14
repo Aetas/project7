@@ -287,17 +287,58 @@ void MovieTree::leftRotate(MovieNode* x)
 
 }
 
-void MovieTree::addFixup(MovieNode*)
+//add rebalance
+void MovieTree::addFixup(MovieNode* offender)
 {
-
-
+	while (offender->parent->isRed)
+	{
+		if(offender->parent == offender->parent->parent->left)
+		{
+			MovieNode* y = offender->parent->parent->right;
+			if (y->isRed)
+			{
+				offender->parent->isRed = FALSE;
+				y->isRed = FALSE;
+				offender->parent->parent->isRed = TRUE;
+				offender = offender->parent->parent;
+			}	
+			else if (offender == offender->parent->right)
+			{
+				offender = offender->parent;
+				leftRotate(offender);
+			}
+			offender->parent->isRed = FALSE;
+			offender->parent->parent->isRed = TRUE;
+			rightRotate(offender);
+		}
+		else
+		{
+			MovieNode* y = offender->parent->parent->left;
+			if (y->isRed)
+			{
+				offender->parent->isRed = FALSE;
+				y->isRed = FALSE;
+				offender->parent->parent->isRed = TRUE;
+				offender = offender->parent->parent;
+			}   
+			else if (offender == offender->parent->left)
+			{
+				offender = offender->parent;
+				rightRotate(offender);
+			}
+			offender->parent->isRed = FALSE;
+			offender->parent->parent->isRed = TRUE;
+			leftRotate(offender);	
+		}
+	}
 }
 
-
+//delete rebalance
 void MovieTree::deleteFixup(MovieNode*)
 {
 
 }
+
 //lets the delete() magic happen
 void MovieTree::transplant(MovieNode* u, MovieNode* v)	//swaps u with v
 {
