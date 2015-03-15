@@ -57,51 +57,63 @@ MovieNode::~MovieNode()
 MovieTree::MovieTree()
 {
 	root = nullptr;
-	operations = 0;
+	Assignment6Output = json_object_new_object();
+	operations = 1;
+	nil = new MovieNode();
 }
 
 //default destructs
 MovieTree::~MovieTree()
 {
-	void delete_tree(MovieNode*);
+	void delete_tree(MovieNode* root);
 }
 
 //used to pass raw data from main() into the MovieTree's domain, eliminating creation of objects in main. Keeps it tidy (to me)
-void MovieTree::addRawNode(int& rank, std::string& ttl, int& yr, int& qtty)
+void MovieTree::addRawNode(int& rank, std::string& ttl, int& yr, int& qtty, json_object* traverseLog)
 {
 	MovieNode* n = new MovieNode(rank, ttl, yr, qtty);	//creates real ndoe
-	insert(n);	//finds the position it belongs in
+	insert(n, traverseLog);	//finds the position it belongs in
 }
 
 //search for a movie by title (external)
-MovieNode* MovieTree::search(std::string& ttl)
+MovieNode* MovieTree::search(std::string& ttl, json_object* traverseLog)
 {
 	MovieNode* n = root;	//start at root, this is the external call
+
+	json_object* jMovie = json_object_new_string(n->title.c_str());
+    json_object_array_add(traverseLog, jMovie);
+
 	if (n == nullptr || n->title == ttl)	//basically, if the tree does not exist
 		return n;
 	if (ttl.compare(n->title) < 0)			//choose which branch ot go into and call self again to repeat
-		return search(n->left, ttl);
+		return search(n->left, ttl, traverseLog);
 	else
-		return search(n->right, ttl);
+		return search(n->right, ttl, traverseLog);
 }
 
 //same as above but internal
-MovieNode* MovieTree::search(MovieNode* n, std::string& ttl)
+MovieNode* MovieTree::search(MovieNode* n, std::string& ttl, json_object* traverseLog)
 {
+    json_object* jMovie = json_object_new_string(n->title.c_str());
+    json_object_array_add(traverseLog, jMovie);
+
 	if (n == nullptr || n->title == ttl)
 		return n;
 	if (ttl.compare(n->title) < 0)
-		return search(n->left, ttl);
+		return search(n->left, ttl, traverseLog);
 	else
-		return search(n->right, ttl);
+		return search(n->right, ttl, traverseLog);
 }
 
 //a function a wrote for fun as prompted by the book. "This method is faster on most modern computers"
-MovieNode* MovieTree::iterative_search(std::string& ttl)
+MovieNode* MovieTree::iterative_search(std::string& ttl, json_object* traverseLog)
 {
+
 	MovieNode* n = root;
 	while (n != nullptr && ttl != n->title)	//instead of recursion calls, just while() it until it is found
 	{
+	    json_object* jMovie = json_object_new_string(n->title.c_str());
+        json_object_array_add(traverseLog, jMovie);
 		if (ttl.compare(n->title) < 0)
 			n = n->left;
 		else
@@ -111,26 +123,49 @@ MovieNode* MovieTree::iterative_search(std::string& ttl)
 }
 
 //external call to print entire tree
-void MovieTree::inorder_walk()
+void MovieTree::inorder_walk(json_object* traverseLog)
 {
 	MovieNode* n = root;	//start at root
 	if (n != nullptr || NULL)	//if there is still room to dive
 	{
-		inorder_walk(n->left);	//start small
+		inorder_walk(n->left, traverseLog);	//start small
+		json_object* jMovie = json_object_new_string(n->title.c_str());
+        json_object_array_add(traverseLog, jMovie);
 		std::cout << n;			//custom ostream
-		inorder_walk(n->right);	//then step down the large
+		inorder_walk(n->right, traverseLog);	//then step down the large
 	}
 }
 
-//same as above but internal
-void MovieTree::inorder_walk(MovieNode* n)
+void MovieTree::inorder_walk(MovieNode* n, json_object* traverseLog)
 {
-	if (n != nullptr || NULL)
+	if (n != nullptr || NULL)	//if there is still room to dive
 	{
-		inorder_walk(n->left);
-		std::cout << n;
-		inorder_walk(n->right);
+		inorder_walk(n->left, traverseLog);	//start small
+		json_object* jMovie = json_object_new_string(n->title.c_str());
+        json_object_array_add(traverseLog, jMovie);
+		std::cout << n;			//custom ostream
+		inorder_walk(n->right, traverseLog);	//then step down the large
 	}
+}
+
+int MovieTree::getTreeSize()
+{
+
+    MovieNode* n = root;
+    if(n == NULL || n == nullptr) { //This node doesn't exist. Therefore there are no nodes in this 'subtree'
+        return 0;
+    } else { //Add the size of the left and right trees, then add 1 (which is the current node)
+        return getTreeSize(n->left) + getTreeSize(n->right) + 1;
+    }
+}
+
+int MovieTree::getTreeSize(MovieNode* n)
+{
+    if(n == NULL || n == nullptr) { //This node doesn't exist. Therefore there are no nodes in this 'subtree'
+        return 0;
+    } else { //Add the size of the left and right trees, then add 1 (which is the current node)
+        return getTreeSize(n->left) + getTreeSize(n->right) + 1;
+    }
 }
 
 //minimum from root (whole tree)
@@ -196,12 +231,14 @@ MovieNode* MovieTree::predecessor(MovieNode* n)
 }
 
 //global insert from root
-void MovieTree::insert(MovieNode* newNode)
+void MovieTree::insert(MovieNode* newNode, json_object* traverseLog)
 {
 	MovieNode* y = nil;
 	MovieNode* x = root;
 	while (x != nil)
 	{
+	    json_object* jMovie = json_object_new_string(y->title.c_str());
+	    json_object_array_add(traverseLog, jMovie);
 	    y = x;
 	    if(newNode->title.compare(x->title) < 0)
             x = x->left;
@@ -223,12 +260,14 @@ void MovieTree::insert(MovieNode* newNode)
 }
 
 //insert that starts in a specified sub tree. Same as above. Used pretty much only for delete and transplant f()'s
-void MovieTree::insert(MovieNode* start, MovieNode* newNode)
+void MovieTree::insert(MovieNode* start, MovieNode* newNode, json_object* traverseLog)
 {
 	MovieNode* y = nil;
 	MovieNode* x = start;
 	while (x != nil)
 	{
+	    json_object* jMovie = json_object_new_string(y->title.c_str());
+	    json_object_array_add(traverseLog, jMovie);
 	    y = x;
 	    if(newNode->title.compare(x->title) < 0)
             x = x->left;
@@ -301,7 +340,7 @@ void MovieTree::addFixup(MovieNode* offender)
 				y->isRed = FALSE;
 				offender->parent->parent->isRed = TRUE;
 				offender = offender->parent->parent;
-			}	
+			}
 			else if (offender == offender->parent->right)
 			{
 				offender = offender->parent;
@@ -316,27 +355,86 @@ void MovieTree::addFixup(MovieNode* offender)
 			MovieNode* y = offender->parent->parent->left;
 			if (y->isRed)
 			{
-				offender->parent->isRed = FALSE;
-				y->isRed = FALSE;
-				offender->parent->parent->isRed = TRUE;
+				offender->parent->isRed = false;
+				y->isRed = false;
+				offender->parent->parent->isRed = true;
 				offender = offender->parent->parent;
-			}   
+			}
 			else if (offender == offender->parent->left)
 			{
 				offender = offender->parent;
 				rightRotate(offender);
 			}
-			offender->parent->isRed = FALSE;
-			offender->parent->parent->isRed = TRUE;
-			leftRotate(offender);	
+			offender->parent->isRed = false;
+			offender->parent->parent->isRed = true;
+			leftRotate(offender);
 		}
 	}
 }
 
 //delete rebalance
-void MovieTree::deleteFixup(MovieNode*)
+void MovieTree::deleteFixup(MovieNode* x)
 {
-
+    while (x != root && !x->isRed)
+    {
+        if (x == x->parent->left)
+        {
+            MovieNode* w = x->parent->right;
+            if (w->isRed)
+            {
+                w->isRed = false;
+                x->parent->isRed = true;
+                leftRotate(x->parent);
+                w = x->parent;
+            }
+            if (!w->left->isRed && !w->right->isRed)
+            {
+                w->isRed = true;
+                x = x->parent;
+            }
+            else if (!w->right->isRed)
+            {
+                w->left->isRed = false;
+                w->isRed = true;
+                rightRotate(w);
+                w = x->parent->right;
+            }
+            w->isRed = x->parent->isRed;
+            x->parent->isRed = false;
+            w->right->isRed = false;
+            leftRotate(x->parent);
+            x = root;
+        }
+        else
+        {
+            MovieNode* w = x->parent->left;
+            if (w->isRed)
+            {
+                w->isRed = false;
+                x->parent->isRed = true;
+                rightRotate(x->parent);
+                w = x->parent;
+            }
+            if (!w->right->isRed && !w->left->isRed)
+            {
+                w->isRed = true;
+                x = x->parent;
+            }
+            else if (!w->left->isRed)
+            {
+                w->right->isRed = false;
+                w->isRed = true;
+                leftRotate(w);
+                w = x->parent->left;
+            }
+            w->isRed = x->parent->isRed;
+            x->parent->isRed = false;
+            w->left->isRed = false;
+            rightRotate(x->parent);
+            x = root;
+        }
+    }
+    x->isRed = false;
 }
 
 //lets the delete() magic happen
@@ -354,23 +452,40 @@ void MovieTree::transplant(MovieNode* u, MovieNode* v)	//swaps u with v
 //maddening delete function
 void MovieTree::delete_node(MovieNode* del_node)	//holy buttshit, Batman
 {
-	if (del_node->left == nullptr)					//if there is no left child
+    MovieNode* x = nullptr;
+    MovieNode* y = del_node;
+    bool originalColor = y->isRed;
+
+	if (del_node->left == nil)					    //if there is no left child
+	{
+	    x = del_node->right;
 		transplant(del_node, del_node->right);		//swap left to right
-	else if (del_node->right == nullptr)			//if there is no right child
+	}
+	else if (del_node->right == nil)                //if there is no right child
+	{
+        x = del_node->left;
 		transplant(del_node, del_node->left);		//swap right to left
+	}
 	else
 	{
-		MovieNode* temp = minimum(del_node->right);	//make temp the smallest node on the large branch of del_node
-		if (temp->parent != del_node)				//if it is more than one chain down
-		{
-			transplant(temp, temp->right);			//swap temp and it's right branch
-			temp->right = del_node->right;			//set right branch to del's right branch
-			temp->parent->right = temp;				//set temp to the right child in it's tree
+		y = minimum(del_node->right);	//make temp the smallest node on the large branch of del_node
+		originalColor = y->isRed;
+		x = y->right;
+		if (y->parent == del_node)
+            x->parent = y;
+        else
+        {
+			transplant(y, y->right);			//swap temp and it's right branch
+			y->right = del_node->right;			//set right branch to del's right branch
+			y->parent->right = y;				//set temp to the right child in it's tree
 		}
-		transplant(del_node, temp);					//now that it's always in the same form, transplant
-		temp->left = del_node->left;				//aquire del_nodes left branch
-		temp->left->parent = temp;					//replace del_node as the heir to the throne
+		transplant(del_node, y);				//now that it's always in the same form, transplant
+		y->left = del_node->left;				//aquire del_nodes left branch
+		y->left->parent = y;					//replace del_node as the heir to the throne
+		y->isRed = del_node->isRed;
 	}
+	if (originalColor == FALSE)
+        deleteFixup(x);
 }
 
 //deletes the whole tree network made in the movietree object. Independant from ~mov() to debug and use again
@@ -381,6 +496,11 @@ void MovieTree::delete_tree(MovieNode* rt)
 	if (rt->right != NULL || rt->right != nullptr)
 		delete_tree(rt->right);
 	delete rt;
+}
+
+json_object* MovieTree::getJsonObject()
+{
+    return Assignment6Output;
 }
 //******************
 //-END MOVIE_TREE
