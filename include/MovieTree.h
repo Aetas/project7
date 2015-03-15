@@ -43,6 +43,7 @@ public:
 	MovieNode* iterative_search(std::string&, json_object*);	//while version of search, non-recursive
 	MovieNode* minimum();					//find min (up for debate wether or not these should be private)
 	MovieNode* maximum();					//find max (^*************************************************^)
+	MovieNode* getNil();
 
 	int getTreeSize();
 	int getMaxHeight();
@@ -63,6 +64,8 @@ private:
 	int getTreeSize(MovieNode*);
     int rbValid(MovieNode*);
     int getMaxHeight(MovieNode*, int&, int&);
+
+    void fix_violation(MovieNode*&);
 
 	void inorder_walk(MovieNode*, json_object*);			//internal reccursive call
 	MovieNode* search(MovieNode*, std::string&, json_object*);//recursive, and sub-tree version of search

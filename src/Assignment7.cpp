@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	string title = "";
 	//old; 1:rent, 2:print inventory, 3:delete a movie, 4:count movies in tree, 5:quit
 
-	while (select != 5)
+	while (select != 6)
 	{
 		cout << "======Main Menu=====" << endl
 			<< "1. Rent a movie" << endl
@@ -92,19 +92,19 @@ int main(int argc, char* argv[])
 			std::getline(cin, title);
 			json_object* tRLog = json_object_new_array();
 			temp = database->iterative_search(title, tRLog);
-			if (temp == NULL)
+			if (temp == database->getNil())
 				cout << "Movie not found." << endl;
 			else if (temp->quantity == 0)
                 cout << "Movie out of stock." << endl;
-
-            if (temp != NULL && temp != nullptr)
+            else
+            //if (temp != database->getNil())
             {
 			    temp->quantity--;
                 string key = std::to_string(database->operations);  //delete this shit, too
 
                 json_object* jROperation = json_object_new_string("rent");           //makes a value string with rent
                 json_object* jRTitle = json_object_new_string(title.c_str());  //makes a value string with title
-                json_object* jRQuantity = json_object_new_int(temp->quantity);       //makes a value int with quantity
+                json_object* jRQuantity = json_object_new_string(std::to_string(temp->quantity).c_str());       //makes a value int with quantity
                 json_object* jRWrapper = json_object_new_object();
 
                 json_object_object_add(jRWrapper, "operation", jROperation);
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
                 //json_object_object_add(database->getJsonObject(), key.c_str(), jRWrapper);
                 //database->operations++;
 
-            if (temp != NULL && temp != nullptr)
+            if (temp != database->getNil())
             {
                     cout << "Movie has been rented." << endl
                     << "Movie Info:" << endl
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
 			json_object* tDLog = json_object_new_array();
 
 			temp = database->iterative_search(title, tDLog);
-			if (temp == NULL || temp == nullptr)
+			if (temp == database->getNil())
 			{
 				cout << "Movie not found." << endl;
 			}
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
                 json_object* jDOperation = json_object_new_string("delete");
                 json_object* jDTitle = json_object_new_string(temp->title.c_str());
 
-                if (temp != nullptr && temp != NULL)    //probably redundant
+                if (temp != database->getNil())    //probably redundant
                     json_object_array_add(tDLog, jDTitle);  //adds final location to the array
 
                 json_object_object_add(jDWrapper, "operation", jDOperation);
@@ -210,6 +210,7 @@ int main(int argc, char* argv[])
 
         if (select == 4) //count movies in tree
         {
+
             int size = database->getTreeSize();
             json_object* jCWrapper = json_object_new_object();
             json_object* jOOperation = json_object_new_string("count");
@@ -223,6 +224,7 @@ int main(int argc, char* argv[])
             json_object_object_add(database->getJsonObject(), key.c_str(), jCWrapper);
 
             database->operations++;
+            cout << size << endl;
 
         }
 
@@ -239,6 +241,9 @@ int main(int argc, char* argv[])
             string key = std::to_string(database->operations);
 
             json_object_object_add(database->getJsonObject(), key.c_str(), jHWrapper);
+
+            database->operations++;
+            cout << height << endl;
         }
 
 		if (select == 6)
@@ -252,8 +257,11 @@ int main(int argc, char* argv[])
         out_file << json_object_to_json_string_ext(database->getJsonObject(), JSON_C_TO_STRING_PRETTY);
     else
         cout << "The file could not be opened." << endl;
-	if (temp != nullptr)
+	if (temp != nullptr && temp != database->getNil())
 		delete temp;
 	delete database;
 	return 0;
 }
+/*
+* ['5', '3', 'Inception', '3', 'Interstellar', '3', "It's a Wonderful Life", '3', 'Leon: The Professional', '3', 'Life Is Beautiful', '3', 'Memento', '5', '6', '']
+*/

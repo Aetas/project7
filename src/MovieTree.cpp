@@ -20,7 +20,7 @@ std::ostream& operator<<(std::ostream& os, MovieNode* n)
 MovieNode::MovieNode()
 {
 	parent = nullptr;
-	title = "";
+	title = "nil";
 	year = -1;
 	quantity = -1;
 	ranking = -1;
@@ -61,6 +61,10 @@ MovieTree::MovieTree()
 	Assignment6Output = json_object_new_object();
 	operations = 1;
 	nil = new MovieNode();
+	nil->parent = nil;
+	nil->left = nil;
+	nil->right = nil;
+	nil->isRed = false;
     root = nil;
     root->parent = nil;
 }
@@ -76,8 +80,9 @@ MovieTree::~MovieTree()
 void MovieTree::addRawNode(int& rank, std::string& ttl, int& yr, int& qtty, json_object* traverseLog)
 {
 	MovieNode* n = new MovieNode(rank, ttl, yr, qtty);	//creates real node
-	n->right = nil;
-	n->left = nil;
+	//n->right = nil;
+	//n->left = nil;
+	n->parent = nil;
 	insert(n, traverseLog);	//finds the position it belongs in
 }
 
@@ -258,6 +263,10 @@ int MovieTree::rbValid(MovieNode * node)
             return 0;
     }
 }
+MovieNode* MovieTree::getNil()
+{
+    return nil;
+}
 
 //minimum from root (whole tree)
 MovieNode* MovieTree::minimum()
@@ -328,9 +337,9 @@ void MovieTree::insert(MovieNode* newNode, json_object* traverseLog)
 	MovieNode* x = root;
 	while (x != nil)
 	{
+	    y = x;
 	    json_object* jMovie = json_object_new_string(y->title.c_str());
 	    json_object_array_add(traverseLog, jMovie);
-	    y = x;
 	    if(newNode->title.compare(x->title) < 0)
             x = x->left;
         else
@@ -345,8 +354,9 @@ void MovieTree::insert(MovieNode* newNode, json_object* traverseLog)
         y->right = newNode;
     newNode->left = nil;
     newNode->right = nil;
- //   if (newNode != root)
-        addFixup(newNode);
+
+    //addFixup(newNode);
+    fix_violation(newNode);
 }
 
 //insert that starts in a specified sub tree. Same as above. Used pretty much only for delete and transplant f()'s
@@ -356,9 +366,9 @@ void MovieTree::insert(MovieNode* start, MovieNode* newNode, json_object* traver
 	MovieNode* x = start;
 	while (x != nil)
 	{
+	    y = x;
 	    json_object* jMovie = json_object_new_string(y->title.c_str());
 	    json_object_array_add(traverseLog, jMovie);
-	    y = x;
 	    if(newNode->title.compare(x->title) < 0)
             x = x->left;
         else
@@ -373,9 +383,171 @@ void MovieTree::insert(MovieNode* start, MovieNode* newNode, json_object* traver
         y->right = newNode;
     newNode->left = nil;
     newNode->right = nil;
-    newNode->isRed = true;
 
-    addFixup(newNode);
+    //addFixup(newNode);
+    fix_violation(newNode);
+}
+
+void MovieTree::fix_violation(MovieNode *&pt) {
+	MovieNode *parent_pt = nullptr;
+	MovieNode *grand_parent_pt = nullptr;
+
+	while ((pt != root) && (pt->isRed) && (pt->parent->isRed))
+	{
+
+		parent_pt = pt->parent;
+		grand_parent_pt = pt->parent->parent;
+
+		/**
+		* Case : A
+		* Parent of pt is left child of Grand-parent of pt
+		**/
+
+		if (parent_pt == grand_parent_pt->left) {
+
+			MovieNode *uncle_pt = grand_parent_pt->right;
+
+			/**
+			* Case : 1
+			* The uncle of pt is also red
+			* Only Recoloring required
+			**/
+
+			if (uncle_pt != nullptr && uncle_pt->isRed) {
+				grand_parent_pt->isRed = true;
+				parent_pt->isRed = false;
+				uncle_pt->isRed = false;
+				pt = grand_parent_pt;
+			}
+
+			else {
+
+				/**
+				* Case : 2
+				* pt is right child of its parent
+				* Left-rotation required
+				**/
+
+				if (pt == parent_pt->right) {
+					leftRotate(parent_pt);
+					pt = parent_pt;
+					parent_pt = pt->parent;
+				}
+
+				/**
+				* Case : 3
+				* pt is left child of its parent
+				* Right-rotation required
+				**/
+
+				rightRotate(grand_parent_pt);
+				std::swap(parent_pt->isRed, grand_parent_pt->isRed);
+				pt = parent_pt;
+			}
+		}
+
+		/**
+		* Case : B
+		* Parent of pt is right child of Grand-parent of pt
+		**/
+
+		else {
+			MovieNode *uncle_pt = grand_parent_pt->left;
+
+			/**
+			* Case : 1
+			* The uncle of pt is also red
+			* Only Recoloring required
+			**/
+
+			if ((uncle_pt != nullptr) && (uncle_pt->isRed)) {
+				grand_parent_pt->isRed = true;
+				parent_pt->isRed = false;
+				uncle_pt->isRed = false;
+				pt = grand_parent_pt;
+			}
+
+			else {
+
+				/**
+				* Case : 2
+				* pt is left child of its parent
+				* Right-rotation required
+				**/
+
+				if (pt == parent_pt->left) {
+					rightRotate(parent_pt);
+					pt = parent_pt;
+					parent_pt = pt->parent;
+				}
+
+				/**
+				* Case : 3
+				* pt is right child of its parent
+				* Left-rotation required
+				**/
+
+				leftRotate(grand_parent_pt);
+				std::swap(parent_pt->isRed, grand_parent_pt->isRed);
+				pt = parent_pt;
+			}
+		}
+	}
+
+	root->isRed = false;
+}
+
+//add rebalance
+void MovieTree::addFixup(MovieNode* offender)
+{
+    MovieNode* y = nil;
+    if (offender == root)
+        offender->isRed = false;
+    else if (offender->parent == root)
+    {
+        //well done, nothing to do here.
+    }
+    else while (offender->isRed)
+	{
+		if (offender->parent == offender->parent->parent->left && offender->parent)
+		{
+			y = offender->parent->parent->right;
+			if (y->isRed)
+			{
+				offender->parent->isRed = false;
+				y->isRed = false;
+				offender->parent->parent->isRed = true;
+				offender = offender->parent->parent;
+			}
+			else if (offender == offender->parent->right)
+			{
+				offender = offender->parent;
+				leftRotate(offender);
+			}
+			offender->parent->isRed = false;
+			offender->parent->parent->isRed = true;
+			rightRotate(offender);
+		}
+		else //(offender->parent == offender->parent->parent->right)
+		{
+			y = offender->parent->parent->left;
+			if (y->isRed)
+			{
+				offender->parent->isRed = false;
+				y->isRed = false;
+				offender->parent->parent->isRed = true;
+				offender = offender->parent->parent;
+			}
+			else if (offender == offender->parent->left)
+			{
+				offender = offender->parent;
+				rightRotate(offender);
+			}
+			offender->parent->isRed = false;
+			offender->parent->parent->isRed = true;
+			leftRotate(offender);
+		}
+    }
 }
 
 //right rotation
@@ -416,56 +588,6 @@ void MovieTree::leftRotate(MovieNode* x)
 
 }
 
-//add rebalance
-void MovieTree::addFixup(MovieNode* offender)
-{
-    MovieNode* y = nil;
-    if(offender->parent != nil && offender->parent->parent != nil && offender->parent->parent->right != nil&& offender->parent->parent->left != nil)
-    {
-	while (offender->parent->isRed)
-	{
-		if(offender->parent == offender->parent->parent->left)
-		{
-			y = offender->parent->parent->right;
-			if (y->isRed)
-			{
-				offender->parent->isRed = false;
-				y->isRed = false;
-				offender->parent->parent->isRed = true;
-				offender = offender->parent->parent;
-			}
-			else if (offender == offender->parent->right)
-			{
-				offender = offender->parent;
-				leftRotate(offender);
-			}
-			offender->parent->isRed = false;
-			offender->parent->parent->isRed = true;
-			rightRotate(offender);
-		}
-		else
-		{
-			y = offender->parent->parent->left;
-			if (y->isRed)
-			{
-				offender->parent->isRed = false;
-				y->isRed = false;
-				offender->parent->parent->isRed = true;
-				offender = offender->parent->parent;
-			}
-			else if (offender == offender->parent->left)
-			{
-				offender = offender->parent;
-				rightRotate(offender);
-			}
-			offender->parent->isRed = false;
-			offender->parent->parent->isRed = true;
-			leftRotate(offender);
-		}
-	}
-    }
-}
-
 //delete rebalance
 void MovieTree::deleteFixup(MovieNode* x)
 {
@@ -499,7 +621,7 @@ void MovieTree::deleteFixup(MovieNode* x)
             leftRotate(x->parent);
             x = root;
         }
-        else
+        else //it is the right child
         {
             MovieNode* w = x->parent->left;
             if (w->isRed)
@@ -530,6 +652,9 @@ void MovieTree::deleteFixup(MovieNode* x)
     }
     x->isRed = false;
 }
+/*
+* ['5', '3', 'Inception', '3', 'Interstellar', '3', "It's a Wonderful Life", '3', 'Leon: The Professional', '3', 'Life Is Beautiful', '3', 'Memento', '5', '6', '']
+*/
 
 //lets the delete() magic happen
 void MovieTree::transplant(MovieNode* u, MovieNode* v)	//swaps u with v
@@ -546,7 +671,7 @@ void MovieTree::transplant(MovieNode* u, MovieNode* v)	//swaps u with v
 //maddening delete function
 void MovieTree::delete_node(MovieNode* del_node)	//holy buttshit, Batman
 {
-    MovieNode* x = nullptr;
+    MovieNode* x = nil;
     MovieNode* y = del_node;
     bool originalColor = y->isRed;
 
@@ -579,7 +704,8 @@ void MovieTree::delete_node(MovieNode* del_node)	//holy buttshit, Batman
 		y->isRed = del_node->isRed;
 	}
 	if (originalColor == FALSE)
-        deleteFixup(x);
+        //deleteFixup(x);
+        fix_violation(x);
 }
 
 //deletes the whole tree network made in the movietree object. Independant from ~mov() to debug and use again
