@@ -45,6 +45,7 @@ public:
 	MovieNode* maximum();					//find max (^*************************************************^)
 
 	int getTreeSize();
+	int getMaxHeight();
 
 	void initJson();
 	json_object* getJsonObject();
@@ -61,6 +62,7 @@ private:
 	int countLongestPath();
 	int getTreeSize(MovieNode*);
     int rbValid(MovieNode*);
+    int getMaxHeight(MovieNode*, int&, int&);
 
 	void inorder_walk(MovieNode*, json_object*);			//internal reccursive call
 	MovieNode* search(MovieNode*, std::string&, json_object*);//recursive, and sub-tree version of search

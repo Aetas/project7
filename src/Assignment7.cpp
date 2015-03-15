@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 {
 	MovieTree* database = new MovieTree();
 	std::ifstream in_file;
-	if(argc >= 1)
+	//if(argc >= 1)
 		in_file.open(argv[1]);
 
 	if (in_file.is_open())
@@ -226,9 +226,19 @@ int main(int argc, char* argv[])
 
         }
 
-        if (select == 5)
+        if (select == 5) //find longest path
         {
+            int height = database->getMaxHeight();
+            json_object* jHWrapper = json_object_new_object();
+            json_object* jHOperation = json_object_new_string("height");
+            json_object* jHeight = json_object_new_string(std::to_string(height).c_str());
 
+            json_object_object_add(jHWrapper, "operation", jHOperation);
+            json_object_object_add(jHWrapper, "output", jHeight);
+
+            string key = std::to_string(database->operations);
+
+            json_object_object_add(database->getJsonObject(), key.c_str(), jHWrapper);
         }
 
 		if (select == 6)
@@ -237,8 +247,11 @@ int main(int argc, char* argv[])
 	}
 
 	std::ofstream out_file;
-	out_file.open("Assignment6Output.txt");
-	out_file << json_object_to_json_string_ext(database->getJsonObject(), JSON_C_TO_STRING_PRETTY);
+	out_file.open(argv[2]);
+	if (out_file.is_open())
+        out_file << json_object_to_json_string_ext(database->getJsonObject(), JSON_C_TO_STRING_PRETTY);
+    else
+        cout << "The file could not be opened." << endl;
 	if (temp != nullptr)
 		delete temp;
 	delete database;

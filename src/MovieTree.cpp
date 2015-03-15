@@ -26,6 +26,7 @@ MovieNode::MovieNode()
 	ranking = -1;
 	left = nullptr;
 	right = nullptr;
+	isRed = false;
 }
 //proper argument construct
 MovieNode::MovieNode(int& rating, std::string& ttl, int& yr, int& qtty)
@@ -37,6 +38,7 @@ MovieNode::MovieNode(int& rating, std::string& ttl, int& yr, int& qtty)
 	ranking = rating;
 	left = nullptr;
 	right = nullptr;
+	isRed = true;
 }
 
 //destructor
@@ -56,22 +58,26 @@ MovieNode::~MovieNode()
 //default construct
 MovieTree::MovieTree()
 {
-	root = nullptr;
 	Assignment6Output = json_object_new_object();
 	operations = 1;
 	nil = new MovieNode();
+    root = nil;
+    root->parent = nil;
 }
 
 //default destructs
 MovieTree::~MovieTree()
 {
 	void delete_tree(MovieNode* root);
+	delete nil;
 }
 
 //used to pass raw data from main() into the MovieTree's domain, eliminating creation of objects in main. Keeps it tidy (to me)
 void MovieTree::addRawNode(int& rank, std::string& ttl, int& yr, int& qtty, json_object* traverseLog)
 {
-	MovieNode* n = new MovieNode(rank, ttl, yr, qtty);	//creates real ndoe
+	MovieNode* n = new MovieNode(rank, ttl, yr, qtty);	//creates real node
+	n->right = nil;
+	n->left = nil;
 	insert(n, traverseLog);	//finds the position it belongs in
 }
 
@@ -83,7 +89,7 @@ MovieNode* MovieTree::search(std::string& ttl, json_object* traverseLog)
 	json_object* jMovie = json_object_new_string(n->title.c_str());
     json_object_array_add(traverseLog, jMovie);
 
-	if (n == nullptr || n->title == ttl)	//basically, if the tree does not exist
+	if (n == nil || n->title == ttl)	//basically, if the tree does not exist
 		return n;
 	if (ttl.compare(n->title) < 0)			//choose which branch ot go into and call self again to repeat
 		return search(n->left, ttl, traverseLog);
@@ -97,7 +103,7 @@ MovieNode* MovieTree::search(MovieNode* n, std::string& ttl, json_object* traver
     json_object* jMovie = json_object_new_string(n->title.c_str());
     json_object_array_add(traverseLog, jMovie);
 
-	if (n == nullptr || n->title == ttl)
+	if (n == nil || n->title == ttl)
 		return n;
 	if (ttl.compare(n->title) < 0)
 		return search(n->left, ttl, traverseLog);
@@ -110,7 +116,7 @@ MovieNode* MovieTree::iterative_search(std::string& ttl, json_object* traverseLo
 {
 
 	MovieNode* n = root;
-	while (n != nullptr && ttl != n->title)	//instead of recursion calls, just while() it until it is found
+	while (n != nil && ttl != n->title)	//instead of recursion calls, just while() it until it is found
 	{
 	    json_object* jMovie = json_object_new_string(n->title.c_str());
         json_object_array_add(traverseLog, jMovie);
@@ -126,7 +132,7 @@ MovieNode* MovieTree::iterative_search(std::string& ttl, json_object* traverseLo
 void MovieTree::inorder_walk(json_object* traverseLog)
 {
 	MovieNode* n = root;	//start at root
-	if (n != nullptr || NULL)	//if there is still room to dive
+	if (n != nil)	//if there is still room to dive
 	{
 		inorder_walk(n->left, traverseLog);	//start small
 		json_object* jMovie = json_object_new_string(n->title.c_str());
@@ -138,7 +144,7 @@ void MovieTree::inorder_walk(json_object* traverseLog)
 
 void MovieTree::inorder_walk(MovieNode* n, json_object* traverseLog)
 {
-	if (n != nullptr || NULL)	//if there is still room to dive
+	if (n != nil)	//if there is still room to dive
 	{
 		inorder_walk(n->left, traverseLog);	//start small
 		json_object* jMovie = json_object_new_string(n->title.c_str());
@@ -152,19 +158,104 @@ int MovieTree::getTreeSize()
 {
 
     MovieNode* n = root;
-    if(n == NULL || n == nullptr) { //This node doesn't exist. Therefore there are no nodes in this 'subtree'
+    if(n == nil)
+    { //This node doesn't exist. Therefore there are no nodes in this 'subtree'
         return 0;
-    } else { //Add the size of the left and right trees, then add 1 (which is the current node)
+    }
+    else
+    { //Add the size of the left and right trees, then add 1 (which is the current node)
         return getTreeSize(n->left) + getTreeSize(n->right) + 1;
     }
 }
 
 int MovieTree::getTreeSize(MovieNode* n)
 {
-    if(n == NULL || n == nullptr) { //This node doesn't exist. Therefore there are no nodes in this 'subtree'
+    if(n == nil)
+    { //This node doesn't exist. Therefore there are no nodes in this 'subtree'
         return 0;
-    } else { //Add the size of the left and right trees, then add 1 (which is the current node)
+    }
+    else
+    { //Add the size of the left and right trees, then add 1 (which is the current node)
         return getTreeSize(n->left) + getTreeSize(n->right) + 1;
+    }
+}
+
+int MovieTree::getMaxHeight()
+{
+    MovieNode* n = root;
+    if(n == nil)
+        return 0;
+
+    int lheight = -1;
+    int rheight = -1;
+
+    lheight = getMaxHeight(n->left, lheight, rheight);
+    rheight = getMaxHeight(n->right, lheight, rheight);
+
+    if(lheight > rheight)
+        return lheight+1;
+    return rheight+1;
+}
+
+int MovieTree::getMaxHeight(MovieNode* n, int& lheight, int& rheight)
+{
+    if(n == nil)
+        return 0;
+
+    lheight = getMaxHeight(n->left, lheight, rheight);
+    rheight = getMaxHeight(n->right, lheight, rheight);
+
+    if(lheight > rheight)
+        return lheight+1;
+    return rheight+1;
+}
+
+// Returns 0 if the tree is invalid, otherwise returns the black node height.
+int MovieTree::rbValid(MovieNode * node)
+{
+    int lh = 0;
+    int rh = 0;
+
+    // If we are at a nil node just return 1
+    if (node == nil)
+        return 1;
+    else
+    {
+        // First check for consecutive red links.
+        if (node->isRed)
+        {
+            if(node->left->isRed || node->right->isRed)
+            {
+                std::cout << "This tree contains a red violation" << std::endl;
+                return 0;
+            }
+        }
+        // Check for valid binary search tree.
+        if ((node->left != nil && node->left->title.compare(node->title) > 0) || (node->right != nil && node->right->title.compare(node->title) < 0))
+        {
+            std::cout << "This tree contains a binary tree violation" << std::endl;
+            return 0;
+        }
+        // Deteremine the height of let and right children.
+        lh = rbValid(node->left);
+        rh = rbValid(node->right);
+
+        // black height mismatch
+        if (lh != 0 && rh != 0 && lh != rh)
+        {
+            std::cout << "This tree contains a black height violation" << std::endl;
+            return 0;
+        }
+        // If neither height is zero, incrament if it if black.
+        if (lh != 0 && rh != 0)
+        {
+                if (node->isRed)
+                    return lh;
+                else
+                    return lh+1;
+        }
+        else
+            return 0;
     }
 }
 
@@ -172,7 +263,7 @@ int MovieTree::getTreeSize(MovieNode* n)
 MovieNode* MovieTree::minimum()
 {
 	MovieNode* n = root;
-	while (n->left != nullptr || NULL)	//I don't think NULL is actually needed
+	while (n->left != nil)	//I don't think NULL is actually needed
 		n = n->left;					//basically, just go left until you cant. That's the smallest
 	return n;
 }
@@ -180,7 +271,7 @@ MovieNode* MovieTree::minimum()
 //minimum for specified tree (sub-tree). same as above. Made for delete, really.
 MovieNode* MovieTree::minimum(MovieNode* n)
 {
-	while (n->left != nullptr || NULL)
+	while (n->left != nil)
 		n = n->left;
 	return n;
 }
@@ -189,7 +280,7 @@ MovieNode* MovieTree::minimum(MovieNode* n)
 MovieNode* MovieTree::maximum()
 {
 	MovieNode* n = root;		//mirror of minimum, as is the nature of binary
-	while (n->right != nullptr)
+	while (n->right != nil)
 		n = n->right;
 	return n;
 }
@@ -197,7 +288,7 @@ MovieNode* MovieTree::maximum()
 //max from specified tree (sub-tree). same as above. made for delete
 MovieNode* MovieTree::maximum(MovieNode* n)
 {
-	while (n->right != nullptr || NULL)
+	while (n->right != nil)
 		n = n->right;
 	return n;
 }
@@ -205,10 +296,10 @@ MovieNode* MovieTree::maximum(MovieNode* n)
 //find next largest in the tree
 MovieNode* MovieTree::successor(MovieNode* n)
 {
-	if (n->right != nullptr || NULL)
+	if (n->right != nil)
 		return minimum(n);			//if the right child is not empty, that is the successor
 	MovieNode* trail = n->parent;	//trailing pointer
-	while (trail != nullptr && n == trail->right)	//so long as trail is pointing at something and ascending the tree, n will be larger so long as it is on the right
+	while (trail != nil && n == trail->right)	//so long as trail is pointing at something and ascending the tree, n will be larger so long as it is on the right
 	{
 		n = trail;
 		trail = trail->parent;	//could just as easily have been "trail = n->parent;"
@@ -219,10 +310,10 @@ MovieNode* MovieTree::successor(MovieNode* n)
 // find next smallest in tree
 MovieNode* MovieTree::predecessor(MovieNode* n)
 {
-	if (n->left != nullptr || NULL)
+	if (n->left != nil)
 		return maximum(n);			//if the left child exists, that is the predecessor
 	MovieNode* trail = n->parent;	//trailing pointer
-	while (trail != nullptr && n == trail->left)		//same as successor, but looking at the other side of the tree for mirrored result
+	while (trail != nil && n == trail->left)		//same as successor, but looking at the other side of the tree for mirrored result
 	{
 		n = trail;
 		trail = trail->parent;	//could just as easily have been "trail = n->parent;"
@@ -254,9 +345,8 @@ void MovieTree::insert(MovieNode* newNode, json_object* traverseLog)
         y->right = newNode;
     newNode->left = nil;
     newNode->right = nil;
-    newNode->isRed = TRUE;
-
-    addFixup(newNode);
+ //   if (newNode != root)
+        addFixup(newNode);
 }
 
 //insert that starts in a specified sub tree. Same as above. Used pretty much only for delete and transplant f()'s
@@ -283,7 +373,7 @@ void MovieTree::insert(MovieNode* start, MovieNode* newNode, json_object* traver
         y->right = newNode;
     newNode->left = nil;
     newNode->right = nil;
-    newNode->isRed = TRUE;
+    newNode->isRed = true;
 
     addFixup(newNode);
 }
@@ -329,16 +419,19 @@ void MovieTree::leftRotate(MovieNode* x)
 //add rebalance
 void MovieTree::addFixup(MovieNode* offender)
 {
+    MovieNode* y = nil;
+    if(offender->parent != nil && offender->parent->parent != nil && offender->parent->parent->right != nil&& offender->parent->parent->left != nil)
+    {
 	while (offender->parent->isRed)
 	{
 		if(offender->parent == offender->parent->parent->left)
 		{
-			MovieNode* y = offender->parent->parent->right;
+			y = offender->parent->parent->right;
 			if (y->isRed)
 			{
-				offender->parent->isRed = FALSE;
-				y->isRed = FALSE;
-				offender->parent->parent->isRed = TRUE;
+				offender->parent->isRed = false;
+				y->isRed = false;
+				offender->parent->parent->isRed = true;
 				offender = offender->parent->parent;
 			}
 			else if (offender == offender->parent->right)
@@ -346,13 +439,13 @@ void MovieTree::addFixup(MovieNode* offender)
 				offender = offender->parent;
 				leftRotate(offender);
 			}
-			offender->parent->isRed = FALSE;
-			offender->parent->parent->isRed = TRUE;
+			offender->parent->isRed = false;
+			offender->parent->parent->isRed = true;
 			rightRotate(offender);
 		}
 		else
 		{
-			MovieNode* y = offender->parent->parent->left;
+			y = offender->parent->parent->left;
 			if (y->isRed)
 			{
 				offender->parent->isRed = false;
@@ -370,6 +463,7 @@ void MovieTree::addFixup(MovieNode* offender)
 			leftRotate(offender);
 		}
 	}
+    }
 }
 
 //delete rebalance
