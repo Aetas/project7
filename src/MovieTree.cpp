@@ -80,8 +80,8 @@ MovieTree::~MovieTree()
 void MovieTree::addRawNode(int& rank, std::string& ttl, int& yr, int& qtty, json_object* traverseLog)
 {
 	MovieNode* n = new MovieNode(rank, ttl, yr, qtty);	//creates real node
-	//n->right = nil;
-	//n->left = nil;
+	n->right = nil;
+	n->left = nil;
 	n->parent = nil;
 	insert(n, traverseLog);	//finds the position it belongs in
 }
@@ -591,7 +591,8 @@ void MovieTree::leftRotate(MovieNode* x)
 //delete rebalance
 void MovieTree::deleteFixup(MovieNode* x)
 {
-    while (x != root && !x->isRed)
+    if(x != nil)
+    while (x != root && !(x->isRed))
     {
         if (x == x->parent->left)
         {
@@ -603,12 +604,12 @@ void MovieTree::deleteFixup(MovieNode* x)
                 leftRotate(x->parent);
                 w = x->parent;
             }
-            if (!w->left->isRed && !w->right->isRed)
+            if (!(w->left->isRed) && !(w->right->isRed))
             {
                 w->isRed = true;
                 x = x->parent;
             }
-            else if (!w->right->isRed)
+            else if (!(w->right->isRed))
             {
                 w->left->isRed = false;
                 w->isRed = true;
@@ -643,11 +644,14 @@ void MovieTree::deleteFixup(MovieNode* x)
                 leftRotate(w);
                 w = x->parent->left;
             }
-            w->isRed = x->parent->isRed;
-            x->parent->isRed = false;
-            w->left->isRed = false;
-            rightRotate(x->parent);
-            x = root;
+            else
+            {
+                w->isRed = x->parent->isRed;
+                x->parent->isRed = false;
+                w->left->isRed = false;
+                rightRotate(x->parent);
+                x = root;
+            }
         }
     }
     x->isRed = false;
@@ -671,42 +675,57 @@ void MovieTree::transplant(MovieNode* u, MovieNode* v)	//swaps u with v
 //maddening delete function
 void MovieTree::delete_node(MovieNode* del_node)	//holy buttshit, Batman
 {
-    MovieNode* x = nil;
-    MovieNode* y = del_node;
-    bool originalColor = y->isRed;
+    MovieNode* x = nil;                             //initialize
+    MovieNode* y = del_node;                        //node-to-be (deleted)
+    bool originalColor = y->isRed;                  //store initial color
 
-	if (del_node->left == nil)					    //if there is no left child
+    if (del_node->left == nil && del_node->right == nil)
+    {
+        if (del_node->parent->left == del_node)
+            del_node->parent->left = nil;
+        else
+            del_node->parent->right = nil;
+    }
+	else if (del_node->left == nil)                 //if there is no left child
 	{
 	    x = del_node->right;
-		transplant(del_node, del_node->right);		//swap left to right
+		transplant(del_node, del_node->right);		//swap with right
 	}
 	else if (del_node->right == nil)                //if there is no right child
 	{
         x = del_node->left;
-		transplant(del_node, del_node->left);		//swap right to left
+		transplant(del_node, del_node->left);		//swap with left
 	}
-	else
+	else    //both children are non-empty
 	{
-		y = minimum(del_node->right);	//make temp the smallest node on the large branch of del_node
-		originalColor = y->isRed;
-		x = y->right;
-		if (y->parent == del_node)
-            x->parent = y;
-        else
+		y = minimum(del_node->right);	        //make temp the smallest node on the large branch of del_node
+		originalColor = y->isRed;               //preserve original color
+		//if (y->right != nil)
+        //{
+            x = y->right;                       //set x to y's largest child. y is smallest, so it has no left child. if right is nil, x is nil.
+            if (y->parent == del_node)          //if y is a child of the delete node
+                x->parent = y;                  //set x's parent to y. Seems redundant.
+        //}
+        else    //else it is not the delete node's child
         {
-			transplant(y, y->right);			//swap temp and it's right branch
-			y->right = del_node->right;			//set right branch to del's right branch
-			y->parent->right = y;				//set temp to the right child in it's tree
+            if(y->right != nil)
+                transplant(y, y->right);			//swap y and it's right branch
+            if (y->right != nil)
+                y->right = del_node->right;			//set right branch to del's right branch. Fuck this guy. Right here.
+            else
+
+			y->parent->right = y;				//set y to the right child in it's tree
 		}
 		transplant(del_node, y);				//now that it's always in the same form, transplant
 		y->left = del_node->left;				//aquire del_nodes left branch
 		y->left->parent = y;					//replace del_node as the heir to the throne
-		y->isRed = del_node->isRed;
+		y->isRed = del_node->isRed;             //copy color over
 	}
-	if (originalColor == FALSE)
-        //deleteFixup(x);
-        fix_violation(x);
+//	delete del_node;
+	if (!originalColor)
+        deleteFixup(x);
 }
+
 
 //deletes the whole tree network made in the movietree object. Independant from ~mov() to debug and use again
 void MovieTree::delete_tree(MovieNode* rt)

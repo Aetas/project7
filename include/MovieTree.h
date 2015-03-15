@@ -45,6 +45,8 @@ public:
 	MovieNode* maximum();					//find max (^*************************************************^)
 	MovieNode* getNil();
 
+	void rbDelete(MovieNode*);
+
 	int getTreeSize();
 	int getMaxHeight();
 
