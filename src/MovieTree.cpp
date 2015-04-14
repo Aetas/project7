@@ -388,105 +388,58 @@ void MovieTree::insert(MovieNode* start, MovieNode* newNode, json_object* traver
     fix_violation(newNode);
 }
 
-void MovieTree::fix_violation(MovieNode *&pt) {
+void MovieTree::fix_violation(MovieNode *&pt)	//alt method/attempt. Still needs heavy commenting. 
+{
 	MovieNode *parent_pt = nullptr;
 	MovieNode *grand_parent_pt = nullptr;
 
 	while ((pt != root) && (pt->isRed) && (pt->parent->isRed))
 	{
-
 		parent_pt = pt->parent;
 		grand_parent_pt = pt->parent->parent;
 
-		/**
-		* Case : A
-		* Parent of pt is left child of Grand-parent of pt
-		**/
-
-		if (parent_pt == grand_parent_pt->left) {
-
+		if (parent_pt == grand_parent_pt->left) 
+		{
 			MovieNode *uncle_pt = grand_parent_pt->right;
-
-			/**
-			* Case : 1
-			* The uncle of pt is also red
-			* Only Recoloring required
-			**/
-
-			if (uncle_pt != nullptr && uncle_pt->isRed) {
+			if (uncle_pt != nullptr && uncle_pt->isRed) 
+			{
 				grand_parent_pt->isRed = true;
 				parent_pt->isRed = false;
 				uncle_pt->isRed = false;
 				pt = grand_parent_pt;
 			}
-
-			else {
-
-				/**
-				* Case : 2
-				* pt is right child of its parent
-				* Left-rotation required
-				**/
-
-				if (pt == parent_pt->right) {
+			else 
+			{
+				if (pt == parent_pt->right) 
+				{
 					leftRotate(parent_pt);
 					pt = parent_pt;
 					parent_pt = pt->parent;
 				}
-
-				/**
-				* Case : 3
-				* pt is left child of its parent
-				* Right-rotation required
-				**/
-
 				rightRotate(grand_parent_pt);
 				std::swap(parent_pt->isRed, grand_parent_pt->isRed);
 				pt = parent_pt;
 			}
 		}
-
-		/**
-		* Case : B
-		* Parent of pt is right child of Grand-parent of pt
-		**/
-
-		else {
+		else 
+		{
 			MovieNode *uncle_pt = grand_parent_pt->left;
-
-			/**
-			* Case : 1
-			* The uncle of pt is also red
-			* Only Recoloring required
-			**/
-
-			if ((uncle_pt != nullptr) && (uncle_pt->isRed)) {
+			if ((uncle_pt != nullptr) && (uncle_pt->isRed))
+		   	{
 				grand_parent_pt->isRed = true;
 				parent_pt->isRed = false;
 				uncle_pt->isRed = false;
 				pt = grand_parent_pt;
 			}
 
-			else {
-
-				/**
-				* Case : 2
-				* pt is left child of its parent
-				* Right-rotation required
-				**/
-
-				if (pt == parent_pt->left) {
+			else
+		   	{
+				if (pt == parent_pt->left) 
+				{
 					rightRotate(parent_pt);
 					pt = parent_pt;
 					parent_pt = pt->parent;
 				}
-
-				/**
-				* Case : 3
-				* pt is right child of its parent
-				* Left-rotation required
-				**/
-
 				leftRotate(grand_parent_pt);
 				std::swap(parent_pt->isRed, grand_parent_pt->isRed);
 				pt = parent_pt;
